@@ -3,34 +3,34 @@ const Service = require("../models/service.model");
 
 const syncCategoryCounts = async () => {
   const counts = await Service.aggregate([
-    { $match: { published: { $ne: false } } },
     { $group: { _id: "$category", count: { $sum: 1 } } },
   ]);
-  const map = new Map(counts.map((c) => [c._id, c.count]));
+  const map = new Map(counts.map((c) => [String(c._id || ""), c.count]));
   const categories = await Category.find();
   await Promise.all(
-    categories.map((cat) => {
-      let count = map.get(cat.key) || 0;
-      if (cat.key === "cruise") {
+    categories.map(async (cat) => {
+      const key = String(cat.key || cat.id || "");
+      let count = map.get(key) || 0;
+      if (key === "cruise") {
         count = (map.get("cruise-day") || 0) + (map.get("cruise-night") || 0);
       }
-      if (cat.count !== count) {
+      if ((cat.count || 0) !== count) {
         cat.count = count;
-        return cat.save();
+        await cat.save();
       }
-      return null;
     })
   );
 };
 
 exports.list = async (req, res) => {
   try {
-    await syncCategoryCounts().catch(() => {});
+    await syncCategoryCounts().catch((e) => console.error("syncCategoryCounts:", e.message));
     const filter = {};
     if (req.query.status) filter.status = req.query.status;
-    const items = await Category.find(filter).sort({ order: 1, createdAt: 1 });
+    const items = await Category.find(filter).sort({ order: 1, createdAt: 1 }).lean();
     res.json({ success: true, data: items });
   } catch (error) {
+    console.error("categories.list error:", error);
     res.status(500).json({ success: false, message: "Không thể tải danh mục.", error: error.message });
   }
 };
