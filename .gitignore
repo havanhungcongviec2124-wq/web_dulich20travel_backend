@@ -1,0 +1,5 @@
+node_modules/
+.env
+mg.md
+npm-debug.log*
+.DS_Store
