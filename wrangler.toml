@@ -1,0 +1,10 @@
+name = "web-dulich20travel-backend"
+compatibility_date = "2026-04-01"
+
+# NOTE: This backend is a Node.js/Express + MongoDB API (server.js) and cannot run
+# as Cloudflare static assets/Workers without a rewrite. This config exists so
+# `npx wrangler deploy` does not fail with "Could not detect a directory containing
+# static files" on misconfigured Cloudflare projects. Deploy the real API on a Node
+# host (Render/Railway/Fly/VPS) using: npm ci && node server.js (see render.yaml).
+[assets]
+directory = "./public"
