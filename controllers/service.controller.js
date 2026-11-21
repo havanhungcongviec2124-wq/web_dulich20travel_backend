@@ -7,6 +7,9 @@ const inBand = (price, band) => {
   return price >= min && price < max;
 };
 
+const LIST_EXCLUDE =
+  "-gallery -secondaryImage -description -intro -summary -summaryMobile -overviewTitle -itinerary -options -included -excluded -notes -amenitiesDetail -highlights -address -duration -departure -guestStandard -roomType -marketPrice -stars -featuredBadge -updatedAtLabel -displayPrice -consultant";
+
 exports.list = async (req, res) => {
   try {
     const {
@@ -19,6 +22,7 @@ exports.list = async (req, res) => {
       status,
       page = 1,
       limit = 100,
+      full,
     } = req.query;
 
     const filter = {};
@@ -41,7 +45,10 @@ exports.list = async (req, res) => {
       ];
     }
 
-    let items = await Service.find(filter).lean();
+    const projection = String(full) === "true" ? undefined : LIST_EXCLUDE;
+    let query = Service.find(filter);
+    if (projection) query = query.select(projection);
+    let items = await query.lean();
 
     if (price) {
       items = items.filter((s) => inBand(Number(s.price || 0), price));
